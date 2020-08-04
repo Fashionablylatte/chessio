@@ -4,7 +4,6 @@ import chess.{Game, Situation}
 import chess.format.Forsyth
 import chess.variant.Standard
 import edu.brown.cs.engine.Evaluation
-
 import org.scalatest.Assertions
 import org.junit.Test
 

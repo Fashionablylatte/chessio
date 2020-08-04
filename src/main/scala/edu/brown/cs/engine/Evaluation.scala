@@ -1,7 +1,7 @@
 package edu.brown.cs.engine
 
+import chess.Game
 import chess.Status.{Draw, Mate, Stalemate, VariantEnd}
-import chess.{Game, Move, Pos}
 
 object Evaluation {
 

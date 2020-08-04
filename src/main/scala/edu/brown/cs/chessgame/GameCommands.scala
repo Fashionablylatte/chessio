@@ -1,6 +1,7 @@
 package edu.brown.cs.chessgame
 
 import edu.brown.cs.engine.{AlphaBetaEngine, Evaluation}
+import edu.brown.cs.engine.Evaluation
 
 object GameCommands {
   private var game : Option[GameState] = None

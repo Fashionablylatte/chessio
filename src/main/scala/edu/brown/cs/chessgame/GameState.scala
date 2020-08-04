@@ -1,9 +1,8 @@
 package edu.brown.cs.chessgame
 
-import chess.{Game, Move, MoveMetrics, Pos, Setup, Valid, variant}
-import chess.Pos._
 import chess.Status.{Draw, Mate, Stalemate, VariantEnd}
 import chess.format.Forsyth
+import chess.{Game, Move, MoveMetrics, Pos, Setup, variant}
 import scalaz.{Failure, Success}
 
 class GameState(fen: String = "None") {

@@ -1,10 +1,9 @@
 package edu.brown.cs.engine
 
-import chess.{Game, Move}
+import chess.Move
 import edu.brown.cs.chessgame.GameState
 
 import scala.collection.mutable
-import scala.concurrent.Future
 
 class MinimaxEngine(gameState: GameState, isWhite: Boolean) {
   private var depth = 2

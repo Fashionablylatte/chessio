@@ -1,5 +1,6 @@
 package edu.brown.cs.main
 
+import edu.brown.cs.chessgame.GameState
 import edu.brown.cs.chessgame.{GameCommands, GameState}
 import edu.brown.cs.io.REPL
 

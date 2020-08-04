@@ -1,7 +1,5 @@
 package edu.brown.cs.engine
 
-package edu.brown.cs.engine
-
 import chess.{Game, Move}
 
 object SlowAlphaBeta {

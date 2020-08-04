@@ -1,12 +1,14 @@
 package edu.brown.cs.engine
 
 import chess.Move
-import edu.brown.cs.chessgame.GameState
+import edu.brown.cs.chessgame.{GameState, PosHash}
 
 import scala.collection.mutable
 
 class AlphaBetaEngine(gameState: GameState, isWhite: Boolean) {
-  private var depth = 3
+  private var depth = 5
+  private val table = new mutable.HashMap[PosHash, Double](120000, 0.9)
+  private val ab = new AlphaBeta(table)
 
   val whiteOrdering: Ordering[(Double, Move)] = new Ordering[(Double, Move)]{
     def compare(a: (Double, Move), b: (Double, Move)) = a._1 compare b._1
@@ -23,7 +25,7 @@ class AlphaBetaEngine(gameState: GameState, isWhite: Boolean) {
       Console.println("Good game!")
     } else { //TODO we can multithread here later
       val moveQ = new mutable.PriorityQueue[(Double, Move)]()(if(isWhite) whiteOrdering else blackOrdering)
-      moveList.foreach(m => moveQ.enqueue((AlphaBeta.alphabeta(0, gameState.getGame().apply(m), isWhite, depth, Double.NegativeInfinity, Double.PositiveInfinity), m)))
+      moveList.foreach(m => moveQ.enqueue((ab.alphabeta(0, gameState.getGame().apply(m), isWhite, depth, Double.NegativeInfinity, Double.PositiveInfinity), m)))
       val bestPair = moveQ.dequeue()
       val bestMove = bestPair._2
       println(s"best move was $bestPair at depth $depth")

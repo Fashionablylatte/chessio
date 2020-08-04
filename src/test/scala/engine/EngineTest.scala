@@ -2,13 +2,13 @@ package engine
 
 import java.util
 
-import edu.brown.cs.chessgame.GameState
-import edu.brown.cs.engine.MinimaxEngine
 import org.scalatest.Assertions
 import org.junit.Test
 
 import scala.collection.mutable
 import chess.Hash
+import edu.brown.cs.engine.MinimaxEngine
+import edu.brown.cs.chessgame.GameState
 
 class MinimaxEngineSuite {
 //  @Test def queueTest: Unit ={
