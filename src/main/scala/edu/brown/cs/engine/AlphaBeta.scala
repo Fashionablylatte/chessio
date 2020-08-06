@@ -13,7 +13,7 @@ class AlphaBeta(posMap: mutable.HashMap[PosHash, Double]) {
       val hash = GameHash.hashGame(game)
       val ret = posMap.get(hash) match {
         case Some(r) => println("found"); r
-        case None => val r = Evaluation.evalPos(game); posMap.put(hash, r); r
+        case None => println("not found"); val r = Evaluation.evalPos(game); posMap.put(hash, r); r
       }
 //      println(s"recursive call to ${if(shouldMaximize) "MAXIMIZE" else "MINIMIZE"} at depth $currDepth returned $ret")
       ret
@@ -23,7 +23,7 @@ class AlphaBeta(posMap: mutable.HashMap[PosHash, Double]) {
         val hash = GameHash.hashGame(game)
         val ret = posMap.get(hash) match {
           case Some(r) => println("found"); r
-          case None => val r = Evaluation.evalPos(game); posMap.put(hash, r); r
+          case None => println("not found"); val r = Evaluation.evalPos(game); posMap.put(hash, r); r
         }
 //        println(s"recursive call to MAXIMIZE at depth $currDepth returned $ret")
         ret
@@ -44,7 +44,7 @@ class AlphaBeta(posMap: mutable.HashMap[PosHash, Double]) {
         val hash = GameHash.hashGame(game)
         val ret = posMap.get(hash) match {
           case Some(r) => println("found"); r
-          case None => val r = Evaluation.evalPos(game); posMap.put(hash, r); r
+          case None => println("not found"); val r = Evaluation.evalPos(game); posMap.put(hash, r); r
         }
 //        println(s"recursive call to MINIMIZE at depth $currDepth returned $ret")
         ret

@@ -18,6 +18,12 @@
     <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.13.2" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-parser-combinators_2.13:1.1.2" level="project" />
     <orderEntry type="library" name="Maven: org.scalaz:scalaz-core_2.13:7.2.30" level="project" />
+    <orderEntry type="library" name="Maven: org.scalaj:scalaj-http_2.13:2.4.2" level="project" />
+    <orderEntry type="library" name="Maven: org.json4s:json4s-native_2.13:3.6.9" level="project" />
+    <orderEntry type="library" name="Maven: org.json4s:json4s-core_2.13:3.6.9" level="project" />
+    <orderEntry type="library" name="Maven: org.json4s:json4s-ast_2.13:3.6.9" level="project" />
+    <orderEntry type="library" name="Maven: org.json4s:json4s-scalap_2.13:3.6.9" level="project" />
+    <orderEntry type="library" name="Maven: com.thoughtworks.paranamer:paranamer:2.8" level="project" />
     <orderEntry type="library" name="Maven: org.lichess:scalachess:10.0.1" level="project" />
     <orderEntry type="library" name="Maven: com.github.ornicar:scalalib:7.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.13" level="project" />
