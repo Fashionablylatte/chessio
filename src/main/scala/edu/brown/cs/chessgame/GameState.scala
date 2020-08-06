@@ -54,6 +54,8 @@ class GameState(fen: String = "None") {
     gameString
   }
 
+  def isSyzygy(): Boolean = this.game.situation.board.pieces.size <= 7
+
   def isEnd(): Boolean ={
     val status = game.situation.status
     status match {

@@ -1,11 +1,10 @@
 package engine
 
-import chess.{Move, Pos}
+import chess.{Pos}
 import chess.format.Uci
 import edu.brown.cs.io.openings.OpeningEndpoint
-import org.scalatest.Assertions
+import org.scalatest.Assertions._
 import org.junit.Test
-import scalaj.http._
 
 class OpeningSuite {
   val mov = OpeningEndpoint.openingQuery("rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
