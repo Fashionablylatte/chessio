@@ -2,10 +2,11 @@ package edu.brown.cs.chessgame
 
 import chess.Status.{Draw, Mate, Stalemate, VariantEnd}
 import chess.format.Forsyth
-import chess.{Game, Move, MoveMetrics, Pos, Setup, variant}
+import chess.{Game, Move, MoveMetrics, Pos, Role, Setup, variant}
+import edu.brown.cs.io.lichess.LichessEndpoint
 import scalaz.{Failure, Success}
 
-class GameState(fen: String = "None") {
+class GameState(fen: String = "None", endpoint: Option[LichessEndpoint] = None) {
   private var game = Setup(variant.Standard)
   if(!fen.equals("None")){
     val sit = Forsyth <<@(variant.Standard, fen)
@@ -16,25 +17,34 @@ class GameState(fen: String = "None") {
 
   def printBoard(): Unit = println(game.board.toString)
 
-  def makeMove(start: String, dest: String): Unit ={
+  def makeMove(start: String, dest: String, promo: String): Option[Move] ={
     if(isEnd()){
       Console.println("'startgame' to start another game.")
+      None
       } else {
       val startSquare = Pos.posAt(start.toLowerCase())
       val destSquare = Pos.posAt(dest.toLowerCase())
+      val promote = Role.promotable(promo)
       startSquare match {
-        case None => Console.println("Invalid starting square")
+        case None => Console.println("Invalid starting square"); None
         case Some(s) =>
           destSquare match {
-            case None => Console.println("Invalid destination square")
+            case None => Console.println("Invalid destination square"); None
             case Some(d) =>
               Console.println(s"${game.moveString} ${start} to ${dest}")
-              game(s, d, None, MoveMetrics()) match {
+              game(s, d, promote, MoveMetrics()) match {
                 case Success(a) =>
                   game = a._1
                   Console.println(game.board.toString + "\n" + displayMoves())
                   isEnd()
-                case Failure(e) => Console.println(s"Invalid or illegal move: ${e}")
+                  if(endpoint.nonEmpty){
+                    println("sending move to ext")
+                    endpoint.get.sendMove(a._2)
+                  } else {
+                    println("no ext endpt")
+                  }
+                  Some(a._2)
+                case Failure(e) => Console.println(s"Invalid or illegal move: ${e}"); None
               }
           }
       }

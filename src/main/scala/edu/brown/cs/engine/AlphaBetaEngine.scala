@@ -28,12 +28,18 @@ class AlphaBetaEngine(gameState: GameState, isWhite: Boolean) {
   def makeMove(): Unit ={
     if(book){
       OpeningEndpoint.openingQuery(Forsyth >> gameState.getGame()) match {
-        case Some(move) => println("Found opening move"); gameState.makeMove(move.orig.toString, move.dest.toString);
+        case Some(move) =>
+          println("Found opening move")
+          val prom = if(move.promotion.nonEmpty) move.promotion.get.forsyth.toString() else ""
+          gameState.makeMove(move.orig.toString, move.dest.toString, prom)
         case None => println("No ODB respoonse."); book = false; makeMove()
       }
     } else if(syzygy) {
       TablebaseEndpoint.mainlineQuery(Forsyth >> gameState.getGame()) match {
-        case Some(move) => println("Found tablebase move"); gameState.makeMove(move.orig.toString, move.dest.toString);
+        case Some(move) =>
+          println("Found tablebase move")
+          val prom = if(move.promotion.nonEmpty) move.promotion.get.forsyth.toString() else ""
+          gameState.makeMove(move.orig.toString, move.dest.toString, prom)
         case None => println("No TBL respoonse."); syzygy = false; lockSyzygy = true; makeMove()
       }
     } else {
@@ -52,7 +58,8 @@ class AlphaBetaEngine(gameState: GameState, isWhite: Boolean) {
           }
           println(s"other moves in order: $movestr")
           println(s"ordering used was ${moveQ.ord.toString()}")
-          gameState.makeMove(bestMove.orig.toString, bestMove.dest.toString)
+          val prom = if(bestMove.promotion.nonEmpty) bestMove.promotion.get.forsyth.toString() else ""
+          gameState.makeMove(bestMove.orig.toString, bestMove.dest.toString, prom)
         }
       }
       if(!lockSyzygy) syzygy = gameState.isSyzygy()

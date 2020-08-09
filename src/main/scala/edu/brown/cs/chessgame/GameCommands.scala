@@ -2,6 +2,7 @@ package edu.brown.cs.chessgame
 
 import edu.brown.cs.engine.{AlphaBetaEngine, Evaluation}
 import edu.brown.cs.engine.Evaluation
+import edu.brown.cs.io.lichess.LichessEndpoint
 
 object GameCommands {
   private var game : Option[GameState] = None
@@ -10,32 +11,40 @@ object GameCommands {
   private val ENG_AS_WHITE = true
   private val ENG_AS_BLACK = false
 
-  def startGame(args: Vector[String]): Unit ={ //TODO help instructions
+  def startGame(args: Vector[String]): Option[GameState] ={
+    startGame(args, None)
+  }
+
+  def startGame(args: Vector[String], endpoint: Option[LichessEndpoint]): Option[GameState] ={ //TODO help instructions
     if(args.length == 2){
       val color = args(1).split(" ")(1)
       if(args(0).equals("black")){
         Console.println(s"Starting from fen ${args(1)} as black.")
-        gameInit(1, ENG_AS_WHITE, args(1))
+        val gs = gameInit(1, ENG_AS_WHITE, args(1), endpoint)
         if(color.equals("w")) eng.get.makeMove()
+        gs
       } else {
         Console.println(s"Starting from fen ${args(1)} as white.")
-        gameInit(0, ENG_AS_BLACK, args(1))
+        val gs = gameInit(0, ENG_AS_BLACK, args(1), endpoint)
         if(color.equals("b")) eng.get.makeMove()
+        gs
       }
     } else if(args.length != 1 || args(0).equals("white")){
       Console.println("Starting Standard game as white.")
-      gameInit(0, ENG_AS_BLACK)
+      gameInit(0, ENG_AS_BLACK, "None", endpoint)
     } else {
       Console.println("Starting Standard game as black.")
-      gameInit(1, ENG_AS_WHITE)
+      val gs = gameInit(1, ENG_AS_WHITE, "None", endpoint)
       eng.get.makeMove()
+      gs
     }
   }
 
-  private def gameInit(playerSide: Int, engSide: Boolean, fen: String = "None"): Unit ={
-    game = Some(new GameState(fen))
+  private def gameInit(playerSide: Int, engSide: Boolean, fen: String, endpoint: Option[LichessEndpoint]): Option[GameState] ={
+    game = Some(new GameState(fen, endpoint))
     eng = Some(new AlphaBetaEngine(game.get, engSide))
     side = playerSide
+    game
   }
 
   def makeMove(args: Vector[String]): Unit ={
@@ -47,7 +56,7 @@ object GameCommands {
         } else if(args.size != 2){
           Console.println("Please format your move as START_SQUARE END_SQUARE, e.g. e2 e4")
         } else {
-          g.makeMove(args(0), args(1))
+          g.makeMove(args(0), args(1), if(args.length == 3) args(2) else " ")
           eng.get.makeMove()
         }
     }

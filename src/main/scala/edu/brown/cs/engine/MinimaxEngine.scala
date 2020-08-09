@@ -33,7 +33,7 @@ class MinimaxEngine(gameState: GameState, isWhite: Boolean) {
       }
       println(s"other moves in order: $movestr")
       println(s"ordering used was ${moveQ.ord.toString()}")
-      gameState.makeMove(bestMove.orig.toString, bestMove.dest.toString)
+      gameState.makeMove(bestMove.orig.toString, bestMove.dest.toString, "") //TODO fix promo
     }
   }
 
