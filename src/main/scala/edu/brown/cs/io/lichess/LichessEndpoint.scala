@@ -2,11 +2,7 @@ package edu.brown.cs.io.lichess
 
 import java.util.concurrent.atomic.AtomicBoolean
 
-import scala.io.Source
 import scalaj.http._
-import org.json4s._
-import org.json4s.native.JsonMethods._
-import org.json4s.DefaultFormats
 
 import scala.concurrent.{ExecutionContext, Future}
 import java.util.concurrent.{BlockingQueue, Executors, LinkedBlockingQueue}
@@ -16,14 +12,9 @@ import edu.brown.cs.chessgame.{GameCommands, GameState}
 import scala.util.{Failure, Success, Try}
 import chess.Move
 import edu.brown.cs.engine.{AlphaBeta, AlphaBetaEngine}
+import edu.brown.cs.io.ModelTranslations
 
-class LichessEndpoint {
-  val oauth = "config/token.conf"
-  val bufferedSource = Source.fromFile(oauth)
-  val token = bufferedSource.getLines.nextOption().getOrElse("")
-  bufferedSource.close
-  val botId = "fltestaccountbot"
-  val server = "https://lichess.dev"
+class LichessEndpoint(token: String, botId: String, server: String) extends ModelTranslations {
 
   val DEFAULT_READ_TIMEOUT = 1800000
   val DEFAULT_CONNECT_TIMEOUT = 30000
@@ -32,33 +23,11 @@ class LichessEndpoint {
   val joinedGame : AtomicBoolean = new AtomicBoolean(false)
   val gameStateExists : AtomicBoolean = new AtomicBoolean(false)
   private var opponentColor = "white"
-  val eventQueue = new LinkedBlockingQueue[String]()
   var gameState : GameState = null
   var gameId : String = ""
   var engine : AlphaBetaEngine = null;
 
-  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(8))
-  implicit val formats = DefaultFormats
-
-  case class InboundEvent(`type`: Option[String], challenge: Option[Challenge], game: Option[GameEvent])
-  case class Challenge(id: String,
-                       url: Option[String],
-                       status: String,
-                       challenger: EventPlayer,
-                       destUser: EventPlayer,
-                       variant: EventVariant,
-                       rated: Boolean,
-                       speed: String,
-                       timeControl: EventTimeControl,
-                       color: String,
-                       perf: Perf){
-    override def toString = s"Challenge from $challenger for ${variant.name}"
-  }
-  case class EventPlayer(id: String, name: String, title: Option[String], rating: Int, provisional: Boolean, online: Option[Boolean], lag: Option[Int])
-  case class EventVariant(key: String, name: String, short: String)
-  case class EventTimeControl(`type`: String, limit: Int, increment: Int, show: String)
-  case class Perf(icon: String, name: String)
-  case class GameEvent(id: String)
+  implicit val ec = ExecutionContext.global
 
   def upgradeToBot(args: Vector[String]): Unit ={
     val response: HttpResponse[String] = Http(s"${server}/api/bot/account/upgrade").header("Authorization", s"Bearer $token").postForm.asString
@@ -82,7 +51,7 @@ class LichessEndpoint {
             case _ => println("error - other status code")
           }
         } catch {
-          case ex: Exception => println("Event Processing Error: " + ex.getMessage); ex.printStackTrace()
+          case ex: Exception => println("Event Processing Error: " + ex.getMessage); ex.printStackTrace(); Thread.sleep(60000)
         }
       }
       "Event stream closed normally"
@@ -95,7 +64,7 @@ class LichessEndpoint {
   private def processEvent(str: String): Unit ={
     if(!str.isBlank) {
       println(str)
-      val event = parse(str).extract[InboundEvent]
+      val event = getInboundEvent(str)
       event.`type` match {
         case Some("challenge") => println(s"received challenge ${event.challenge.getOrElse("ex get chal")}"); processChallenge(event.challenge.get)
         case Some("gameStart") => println("game started"); processGame(event.game.get.id)
@@ -148,23 +117,14 @@ class LichessEndpoint {
     println("Game stream closed normally")
   }
 
-  case class GameFull(id: String, variant: EventVariant, clock: GameClock,
-                      speed: String, perf: GamePerf, rated: Boolean, createdAt: BigInt,
-                      white: EventPlayer, black: EventPlayer, initialFen: String,
-                      `type`: String, state: GameEventState)
-  case class GameClock(initial: Int, increment: Int)
-  case class GamePerf(name: String)
-  case class GameEventState(`type`: String, moves: String, wtime: Option[Int], btime: Option[Int],
-                            winc: Option[Int], binc: Option[Int], wdraw: Boolean, bdraw: Boolean, status: String)
-  case class ChatLine(`type`: String, username: String, text: String, room: String)
-
   private def processGameState(state: String): Unit ={
     if(!state.isBlank) {
+      println(state)
       try {
         val st: Either[GameFull, GameEventState] = try {
-          Left(parse(state).extract[GameFull])
+          Left(getGameFull(state))
         } catch {
-          case _ => Right(parse(state).extract[GameEventState])
+          case _ => Right(getGameEventState(state))
         }
 
         st match {
@@ -179,8 +139,8 @@ class LichessEndpoint {
 
   private def processFullGame(gf: GameFull): Unit ={
     if(!gameStateExists.get){
-      println(gf.white.id + " opp")
-      opponentColor = if(gf.white.id.equals(botId)) "black" else "white"
+      println(if(gf.white.nonEmpty) gf.white.get.id else "anon" + " opp")
+      opponentColor = if((if(gf.white.nonEmpty) gf.white.get.id else "anon").equals(botId)) "black" else "white"
       gf.initialFen match {
         case "startpos" =>
           gameState = GameCommands.startGame(Vector(opponentColor), Some(this)).get

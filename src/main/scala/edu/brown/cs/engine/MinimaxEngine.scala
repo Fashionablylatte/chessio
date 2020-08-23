@@ -8,12 +8,12 @@ import scala.collection.mutable
 class MinimaxEngine(gameState: GameState, isWhite: Boolean) {
   private var depth = 2
 
-  val whiteOrdering: Ordering[(Double, Move)] = new Ordering[(Double, Move)]{
-    def compare(a: (Double, Move), b: (Double, Move)) = a._1 compare b._1
+  val whiteOrdering: Ordering[(Int, Move)] = new Ordering[(Int, Move)]{
+    def compare(a: (Int, Move), b: (Int, Move)) = a._1 compare b._1
     override def toString = "whiteOrdering"
   }
-  val blackOrdering: Ordering[(Double, Move)] = new Ordering[(Double, Move)]{
-    def compare(a: (Double, Move), b: (Double, Move)) = b._1 compare a._1
+  val blackOrdering: Ordering[(Int, Move)] = new Ordering[(Int, Move)]{
+    def compare(a: (Int, Move), b: (Int, Move)) = b._1 compare a._1
     override def toString = "blackOrdering"
   }
 
@@ -22,7 +22,7 @@ class MinimaxEngine(gameState: GameState, isWhite: Boolean) {
     if(moveList.isEmpty){
       Console.println("Good game!")
     } else { //TODO we can multithread here later
-      val moveQ = new mutable.PriorityQueue[(Double, Move)]()(if(isWhite) whiteOrdering else blackOrdering)
+      val moveQ = new mutable.PriorityQueue[(Int, Move)]()(if(isWhite) whiteOrdering else blackOrdering)
       moveList.foreach(m => moveQ.enqueue((MiniMax.minimax(0, gameState.getGame().apply(m), isWhite, depth), m)))
       val bestPair = moveQ.dequeue()
       val bestMove = bestPair._2

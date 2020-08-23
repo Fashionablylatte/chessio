@@ -5,7 +5,7 @@ import chess.{Game, Move}
 object SlowAlphaBeta {
   val MAXIMIZE = true
   val MINIMIZE = false
-  def alphabeta(currDepth: Int, game: Game, shouldMaximize: Boolean, maxDepth: Int, alpha: Double, beta: Double): Double ={
+  def alphabeta(currDepth: Int, game: Game, shouldMaximize: Boolean, maxDepth: Int, alpha: Int, beta: Int): Int ={
     if(currDepth == maxDepth){
       val ret = Evaluation.evalPos(game)
       //      println(s"recursive call to ${if(shouldMaximize) "MAXIMIZE" else "MINIMIZE"} at depth $currDepth returned $ret")
@@ -17,7 +17,7 @@ object SlowAlphaBeta {
         //        println(s"recursive call to MAXIMIZE at depth $currDepth returned $ret")
         ret
       } else {
-        var ret = Double.PositiveInfinity
+        var ret = Int.MaxValue
         var b = beta
         val it = moveList.iterator
         while(it.hasNext && b > alpha){
@@ -34,7 +34,7 @@ object SlowAlphaBeta {
         //        println(s"recursive call to MINIMIZE at depth $currDepth returned $ret")
         ret
       } else {
-        var ret = Double.NegativeInfinity
+        var ret = Int.MinValue
         var a = alpha
         val it = moveList.iterator
         while(it.hasNext && a < beta){
