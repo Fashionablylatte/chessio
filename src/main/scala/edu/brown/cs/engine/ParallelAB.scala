@@ -5,12 +5,15 @@ import edu.brown.cs.chessgame.{GameHash, PosHash}
 import edu.brown.cs.io.ChessLogger
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success}
 
 class ParallelAB(posMap: mutable.HashMap[PosHash, Int]) {
   val MAXIMIZE = true
   val MINIMIZE = false
-//  var globalAlpha = Int.MinValue
-//  var globalBeta = Int.MaxValue
 
   val whiteOrdering: Ordering[(Int, Move)] = new Ordering[(Int, Move)]{
     def compare(a: (Int, Move), b: (Int, Move)) = a._1 compare b._1
@@ -22,35 +25,39 @@ class ParallelAB(posMap: mutable.HashMap[PosHash, Int]) {
   }
 
   private def moveFilter(move: Move): Boolean = {
-//    move.orig.toString.equals("g8") && move.dest.toString.equals("g2") //TODO use this to debug why global A/B messes things up
+//    move.orig.toString.equals("g8") && move.dest.toString.equals("g2")
     true
   }
 
   def alphabeta(game: Game, whiteMove: Boolean, maxDepth: Int): Option[(Int, Move)] ={
-    val moveList: List[Move] = game.situation.moves.collect(pair => pair._2).foldLeft(List[Move]())(_.appendedAll(_)).filter(moveFilter)
+    val moveList: BlockingQueue[Move] = game.situation.moves.collect(pair => pair._2).foldLeft(List[Move]())(_.appendedAll(_)).filter(moveFilter)
     var bestMove: Option[(Int, Move)] = None
     if(moveList.nonEmpty){
       val moveQ = new mutable.PriorityQueue[(Int, Move)]()(if (whiteMove) whiteOrdering else blackOrdering)
+      val futureList = new ArrayBuffer[(Future[Int], Move)](moveList.size)
+
+      class CalcThread extends Runnable{
+        override def run(): Unit ={
+
+        }
+      }
+
       moveList.foreach(mv => {
-        val eval = abHelp(game(mv), !whiteMove, 1, maxDepth, Int.MinValue, Int.MaxValue) //TODO set this back to globalAlpha and beta for debugging.
-        moveQ.enqueue((eval, mv))
-        if(whiteMove){
-//          globalAlpha = Math.max(globalAlpha, eval)
-//          ChessLogger.debug(s"Calculated new move $mv")
-//          ChessLogger.debug(s"New alpha is $globalAlpha")
-//          ChessLogger.debug(s"Beta still $globalBeta")
-        } else {
-//          globalBeta = Math.min(globalBeta, eval)
-//          ChessLogger.debug(s"Calculated new move $mv")
-//          ChessLogger.debug(s"Alpha still $globalAlpha")
-//          ChessLogger.debug(s"New beta is $globalBeta")
+        val evalFuture = Future(abHelp(game(mv), !whiteMove, 1, maxDepth, Int.MinValue, Int.MaxValue))
+        futureList.append((evalFuture, mv))
+      })
+      futureList.foreach(pair => {
+        pair._1 onComplete {
+          case Success(eval) =>
+            moveQ.enqueue((eval, pair._2))
+            ChessLogger.debug(s"Queued move ${pair._2}")
+          case Failure(ex) => ChessLogger.error(s"Unable to evaluate move ${pair._2}")
         }
       })
+
       ChessLogger.info(s"Moves found in order: ${moveQ.clone.dequeueAll.mkString(", ")}")
       bestMove = Some(moveQ.dequeue())
     }
-//    globalAlpha = Int.MinValue
-//    globalBeta = Int.MaxValue
     bestMove
   }
 
