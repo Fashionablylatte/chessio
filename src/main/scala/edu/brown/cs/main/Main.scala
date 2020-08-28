@@ -3,6 +3,7 @@ package edu.brown.cs.main
 import edu.brown.cs.chessgame.{GameCommands, GameState}
 import edu.brown.cs.io.REPL
 import edu.brown.cs.io.lichess.LichessEndpoint
+import edu.brown.cs.uci.EngineCommands
 
 import scala.collection.mutable
 import scala.io.Source
@@ -24,10 +25,13 @@ object Main {
       "greet" -> GeneralCommands.hello,
       "startgame" -> GameCommands.startGame,
       "move" -> GameCommands.makeMove,
+      "bestmove" -> GameCommands.makeMove,
       "evaluate" -> GameCommands.evaluate,
       "depth" -> GameCommands.depth,
       "upgrade" -> ep.upgradeToBot,
-      "connect" -> ep.streamEvents
+      "connect" -> ep.streamEvents,
+      "engine" -> EngineCommands.startEngine,
+      "stopengine" -> EngineCommands.stopEngine
     )
 
     val repl = new REPL(commandMap)
