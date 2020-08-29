@@ -31,7 +31,8 @@ object Main {
       "upgrade" -> ep.upgradeToBot,
       "connect" -> ep.streamEvents,
       "engine" -> EngineCommands.startEngine,
-      "stopengine" -> EngineCommands.stopEngine
+      "stopengine" -> EngineCommands.stopEngine,
+      "uci" -> EngineCommands.updateUciStream
     )
 
     val repl = new REPL(commandMap)

@@ -1,11 +1,19 @@
 package edu.brown.cs.uci
 
+import java.io.{BufferedInputStream, BufferedReader, IOException, InputStreamReader}
+import java.nio.charset.{Charset, StandardCharsets}
+
 import edu.brown.cs.io.ChessLogger
+
+import scala.concurrent.{ExecutionContext, Future}
 import scala.sys.process._
 
 object EngineCommands {
 
+  private val uciStream = new InputUciStream
   private var currentProcess: Option[Process] = None
+  implicit val ec = ExecutionContext.global
+
   def startEngine(args: Vector[String]): Unit ={
     if(currentProcess.nonEmpty) {
       currentProcess.get.destroy()
@@ -17,7 +25,7 @@ object EngineCommands {
 
       ChessLogger.info("Starting engine...")
 
-      val process = Process("./engines/stockfish_20011801_x64.exe").#<(System.in).run()
+      val process = Process("./engines/stockfish_20011801_x64.exe").#<(uciStream).#>(System.out).run()
       currentProcess = Some(process)
     } catch {
       case e: Exception => ChessLogger.error(s"Error starting engine: \n ${e.printStackTrace()}")
@@ -33,5 +41,10 @@ object EngineCommands {
     } else {
       ChessLogger.warn("No engine running currently")
     }
+  }
+
+  def updateUciStream(args: Vector[String]): Unit ={
+    val str = if(args.length > 0) args(0) else ""
+    uciStream.append(str)
   }
 }
