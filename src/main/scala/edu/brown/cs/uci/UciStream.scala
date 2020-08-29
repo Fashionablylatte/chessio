@@ -7,7 +7,7 @@ import edu.brown.cs.io.ChessLogger
 
 import scala.collection.mutable
 
-class InputUciStream extends InputStream {
+class UciStream extends InputStream {
   val contents: mutable.Queue[Byte] = mutable.Queue[Byte]()
   var terminate = false
 
