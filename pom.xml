@@ -56,13 +56,13 @@
     <dependency>
       <groupId>org.lichess</groupId>
       <artifactId>scalachess</artifactId>
-      <version>10.0.1</version>
+      <version>10.0.3</version>
     </dependency>
 
     <dependency>
       <groupId>com.github.ornicar</groupId>
       <artifactId>scalalib</artifactId>
-      <version>7.1</version>
+      <version>7.2</version>
     </dependency>
     
     <!-- Test dependencies -->
@@ -105,6 +105,7 @@
       <layout>default</layout>
     </repository>
   </repositories>
+
 
   <build>
     <sourceDirectory>src/main/scala</sourceDirectory>
