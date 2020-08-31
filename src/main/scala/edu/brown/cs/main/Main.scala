@@ -17,8 +17,8 @@ object Main {
   val bufferedSource = Source.fromFile(oauth)
   val token = bufferedSource.getLines.nextOption().getOrElse("")
   bufferedSource.close
-  val botId = "fltestaccountbot"
-  val server = "https://lichess.dev"
+  val botId = "fashionablybota"
+  val server = "https://lichess.org"
 
   def main(args: Array[String]): Unit = {
     val ep = new LichessEndpoint(token, botId, server)
