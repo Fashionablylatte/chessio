@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.brown.cs</groupId>
   <artifactId>chessio</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <name>${project.artifactId}</name>
   <description>A chess engine written in Scala</description>
   <inceptionYear>2020</inceptionYear>
