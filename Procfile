@@ -1,1 +1,1 @@
-web: java -jar target/chessio-0.0.2.jar
+worker: java -jar target/chessio-0.0.2.jar
