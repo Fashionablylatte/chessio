@@ -7,6 +7,7 @@ import edu.brown.cs.uci.EngineCommands
 
 import scala.collection.mutable
 import scala.io.Source
+import scala.io.BufferedSource
 
 /**
  * @author ${user.name}
