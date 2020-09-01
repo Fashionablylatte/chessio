@@ -1,7 +1,5 @@
 package edu.brown.cs.io
 
-import scala.io.Source
-
 /**
  * Logging utility with 7 possible levels of information. 0 (None) for no information printouts, and 6 (trace) for
  * extremely verbose printouts.
@@ -15,9 +13,14 @@ abstract class Logger {
   val DEBUG = 5
   val TRACE = 6
 
-  val conf = "config/logger.conf"
-  val bufferedSource = Source.fromFile(conf)
-  val levelName = bufferedSource.getLines().nextOption().getOrElse("none")
+  val conf = scala.xml.XML.loadFile("config/config.xml")
+  val levelName = try {
+    (conf \ "logging").map(ln => ln.text)(0)
+  } catch {
+    case e: IndexOutOfBoundsException =>
+      Console.err.println("No logger setting found! Defaulting to 'info' (moderately verbose).")
+      "info"
+  }
   val level = levelName.toUpperCase() match {
     case "NONE" => 0
     case "FATAL" => 1
@@ -27,7 +30,6 @@ abstract class Logger {
     case "DEBUG" => 5
     case "TRACE" => 6
   }
-  bufferedSource.close
 
   def fatal(msg: String): Unit ={
     if(level >= FATAL) {

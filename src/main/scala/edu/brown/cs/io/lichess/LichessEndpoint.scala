@@ -1,27 +1,29 @@
 package edu.brown.cs.io.lichess
 
 import java.util.concurrent.atomic.AtomicBoolean
-
 import scalaj.http._
-
 import scala.concurrent.{ExecutionContext, Future}
-import java.util.concurrent.{BlockingQueue, Executors, LinkedBlockingQueue}
-
 import edu.brown.cs.chessgame.{GameCommands, GameState}
-
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 import chess.Move
-import edu.brown.cs.engine.{AlphaBeta, AlphaBetaEngine}
+import edu.brown.cs.engine.{AlphaBetaEngine}
 import edu.brown.cs.io.{ChessLogger, ModelTranslations}
 
+/**
+ * An endpoint with methods for accessing Lichess.
+ * @param token - the user access token permission for the bot. Needs to have bot and board permissions at minimum.
+ * @param botId - the id of the bot. Note that this is all lowercase.
+ * @param server - specifies if the bot is operating on the .dev or .org instance of Lichess.
+ */
 class LichessEndpoint(token: String, botId: String, server: String) extends ModelTranslations {
 
+  //TODO might set these in config.xml instead?
   val DEFAULT_READ_TIMEOUT = 1800000
   val DEFAULT_CONNECT_TIMEOUT = 30000
 
   private val activeGame : AtomicBoolean = new AtomicBoolean(false)
   private val joinedGame : AtomicBoolean = new AtomicBoolean(false)
-  private val gameStateExists : AtomicBoolean = new AtomicBoolean(false)
+  private val gameStateExists : AtomicBoolean = new AtomicBoolean(false) //TODO refactor to be stateless and UCI compliant
   private val connectionOpen : AtomicBoolean = new AtomicBoolean(true)
   private var opponentColor = "white"
   private var gameState : GameState = null
@@ -30,6 +32,12 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
 
   implicit val ec = ExecutionContext.global
 
+  /**
+   * Upgrades the account to bot status. THIS IS NOT REVERSIBLE! Note that only brand-new accounts with no game history
+   * can be converted this way.
+   * @param args - a String Vector of arguments - this method does not use arguments, but requires an (empty) args Vector to
+   *             comply with the REPL method signature.
+   */
   def upgradeToBot(args: Vector[String]): Unit ={
     val response: HttpResponse[String] = Http(s"${server}/api/bot/account/upgrade").header("Authorization", s"Bearer $token").postForm.asString
     response.code match {
@@ -39,6 +47,11 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
     }
   }
 
+  /**
+   * Streams the events the bot account receives.
+   * @param args - a String Vector of arguments - this method does not use arguments, but requires an (empty) args Vector to
+   *             comply with the REPL method signature.
+   */
   def streamEvents(args: Vector[String]): Unit ={
     Future {
       while(!joinedGame.get){
@@ -52,29 +65,33 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
             case _ => ChessLogger.error("error - other status code")
           }
         } catch {
-          case ex: Exception => ChessLogger.error("Event Processing Error: " + ex.getMessage); ex.printStackTrace(); Thread.sleep(60000)
+          case ex: Exception => ChessLogger.error("Event Processing Error: " + ex.getMessage); Thread.sleep(60000)
         }
       }
-      "Event stream closed"
     } onComplete {
       case Success(r) =>
-        ChessLogger.info(r)
+        ChessLogger.info("Event stream shut down normally.")
         connectionOpen.set(false)
       case Failure(ex) =>
-        ChessLogger.error("Event Future error: "  + ex.getMessage)
+        ChessLogger.error("Stream closed due to error: "  + ex.getMessage)
         connectionOpen.set(false)
     }
   }
 
+  /**
+   * Checks if there is an open connection to Lichess.
+   * @return a Boolean indicating if there is an open connection.
+   */
   def isConnectionOpen(): Boolean ={
     connectionOpen.get()
   }
 
+  //Processes an event string from the event stream, converting it to a json object to be further processed later.
   private def processEvent(str: String): Unit ={
     if(!str.isBlank) {
       ChessLogger.debug(str)
       val event = getInboundEvent(str)
-      event.`type` match {
+      event.`type` match { //TODO catch exceptions - mobile breaks this for some reason
         case Some("challenge") => ChessLogger.debug(s"received challenge ${event.challenge.getOrElse("ex get chal")}"); processChallenge(event.challenge.get)
         case Some("gameStart") => ChessLogger.debug("game started"); processGame(event.game.get.id)
         case Some("gameFinish") => ChessLogger.debug("game finished"); resetEndpoint();

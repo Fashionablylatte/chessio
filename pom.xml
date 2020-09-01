@@ -46,6 +46,13 @@
       <artifactId>scalaj-http_2.13</artifactId>
       <version>2.4.2</version>
     </dependency>
+
+    <!-- Parsing dependencies -->
+    <dependency>
+      <groupId>org.scala-lang.modules</groupId>
+      <artifactId>scala-xml_2.13</artifactId>
+      <version>1.2.0</version>
+    </dependency>
     <dependency>
       <groupId>org.json4s</groupId>
       <artifactId>json4s-native_2.13</artifactId>

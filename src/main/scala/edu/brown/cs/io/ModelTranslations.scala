@@ -4,7 +4,11 @@ import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.DefaultFormats
 
-class ModelTranslations {
+/**
+ * This class encapsulates the models for Lichess Event and Game stream objects and the methods for translating them
+ * from strings to json objects.
+ */
+class ModelTranslations { //TODO add validation to translations?
   implicit val formats = DefaultFormats
 
   //Event stream models

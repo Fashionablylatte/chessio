@@ -1,5 +1,7 @@
 package edu.brown.cs.main
 
+import java.util.prefs.InvalidPreferencesFormatException
+
 import edu.brown.cs.chessgame.{GameCommands, GameState}
 import edu.brown.cs.io.{ChessLogger, REPL}
 import edu.brown.cs.io.lichess.LichessEndpoint
@@ -13,12 +15,16 @@ import scala.io.BufferedSource
  * @author ${user.name}
  */
 object Main {
-  val oauth = "config/token.conf"
-  val bufferedSource = Source.fromFile(oauth)
-  val token = bufferedSource.getLines.nextOption().getOrElse("")
-  bufferedSource.close
-  val botId = "fashionablybota"
-  val server = "https://lichess.org"
+  val configs = scala.xml.XML.loadFile("config/config.xml") //TODO enforce schema and catch no file ex
+  val botId = (configs \ "bot" \ "id").map(token => token.text)(0).toLowerCase()
+  val server = (configs \ "environment").map(token => token.text)(0)
+  val token = try{ //TODO RESET ALL TOKENS BEFORE PUBLISHING
+    (configs \ "bot" \ "token").map(token => token.text)(0)
+  } catch {
+    case e: IndexOutOfBoundsException =>
+      Console.println("No token found in configs, attempting to retrieve from env")
+      System.getenv("TOKEN")
+  }
 
   def main(args: Array[String]): Unit = {
     val ep = new LichessEndpoint(token, botId, server)

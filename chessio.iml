@@ -19,6 +19,7 @@
     <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-parser-combinators_2.13:1.1.2" level="project" />
     <orderEntry type="library" name="Maven: org.scalaz:scalaz-core_2.13:7.2.30" level="project" />
     <orderEntry type="library" name="Maven: org.scalaj:scalaj-http_2.13:2.4.2" level="project" />
+    <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-xml_2.13:1.2.0" level="project" />
     <orderEntry type="library" name="Maven: org.json4s:json4s-native_2.13:3.6.9" level="project" />
     <orderEntry type="library" name="Maven: org.json4s:json4s-core_2.13:3.6.9" level="project" />
     <orderEntry type="library" name="Maven: org.json4s:json4s-ast_2.13:3.6.9" level="project" />
@@ -34,7 +35,6 @@
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest_2.13:3.2.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest-core_2.13:3.2.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest-compatible:3.2.0" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.scala-lang.modules:scala-xml_2.13:1.2.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest-featurespec_2.13:3.2.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest-flatspec_2.13:3.2.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.scalatest:scalatest-freespec_2.13:3.2.0" level="project" />

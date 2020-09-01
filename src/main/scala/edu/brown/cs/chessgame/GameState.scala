@@ -3,6 +3,7 @@ package edu.brown.cs.chessgame
 import chess.Status.{Draw, Mate, Stalemate, VariantEnd}
 import chess.format.Forsyth
 import chess.{Game, Move, MoveMetrics, Pos, Role, Setup, variant}
+import edu.brown.cs.io.ChessLogger
 import edu.brown.cs.io.lichess.LichessEndpoint
 import scalaz.{Failure, Success}
 
@@ -19,17 +20,17 @@ class GameState(fen: String = "None", endpoint: Option[LichessEndpoint] = None) 
 
   def makeMove(start: String, dest: String, promo: String): Option[Move] ={
     if(isEnd()){
-      Console.println("'startgame' to start another game.")
+      ChessLogger.info("'startgame' to start another game.")
       None
       } else {
       val startSquare = Pos.posAt(start.toLowerCase())
       val destSquare = Pos.posAt(dest.toLowerCase())
       val promote = Role.promotable(promo)
       startSquare match {
-        case None => Console.println("Invalid starting square"); None
+        case None => ChessLogger.warn("Invalid starting square"); None
         case Some(s) =>
           destSquare match {
-            case None => Console.println("Invalid destination square"); None
+            case None => ChessLogger.warn("Invalid destination square"); None
             case Some(d) =>
               Console.println(s"${game.moveString} ${start} to ${dest}")
               game(s, d, promote, MoveMetrics()) match {
@@ -38,13 +39,13 @@ class GameState(fen: String = "None", endpoint: Option[LichessEndpoint] = None) 
                   Console.println(game.board.toString + "\n" + displayMoves())
                   isEnd()
                   if(endpoint.nonEmpty){
-                    println("sending move to ext")
+                    ChessLogger.debug("sending move to endpoint")
                     endpoint.get.sendMove(a._2)
                   } else {
-                    println("no ext endpt")
+                    ChessLogger.debug("no endpoint found, offline mode only")
                   }
                   Some(a._2)
-                case Failure(e) => Console.println(s"Invalid or illegal move: ${e}"); None
+                case Failure(e) => ChessLogger.error(s"Invalid or illegal move: ${e}"); None
               }
           }
       }
@@ -72,10 +73,10 @@ class GameState(fen: String = "None", endpoint: Option[LichessEndpoint] = None) 
       case None => false
       case Some(s) =>
         s match {
-          case Mate => Console.println(s"Checkmate, ${game.situation.winner.getOrElse("error")} wins!"); true
-          case VariantEnd => Console.println(s"Variant ended, ${game.situation.winner.getOrElse("error")} wins!"); true
-          case Stalemate => Console.println(s"Stalemate."); true
-          case Draw => Console.println(s"A draw was declared automatically."); true
+          case Mate => ChessLogger.info(s"Checkmate, ${game.situation.winner.getOrElse("error")} wins!"); true
+          case VariantEnd => ChessLogger.info(s"Variant ended, ${game.situation.winner.getOrElse("error")} wins!"); true
+          case Stalemate => ChessLogger.info(s"Stalemate."); true
+          case Draw => ChessLogger.info(s"A draw was declared automatically."); true
         }
     }
   }

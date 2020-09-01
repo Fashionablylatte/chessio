@@ -1,0 +1,12 @@
+<!--Config file for this application. Layout specified by config.dtd-->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE config SYSTEM "config/config.dtd">
+<config>
+    <logging>debug</logging>
+    <bot>
+        <id></id>
+        <token></token>
+    </bot>
+    <environment>https://lichess.org</environment>
+    <engine>engines/stockfish_20011801_x64.exe</engine>
+</config>
