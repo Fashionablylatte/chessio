@@ -1,12 +1,15 @@
 package edu.brown.cs.io.lichess
 
 import java.util.concurrent.atomic.AtomicBoolean
+
 import scalaj.http._
+
 import scala.concurrent.{ExecutionContext, Future}
 import edu.brown.cs.chessgame.{GameCommands, GameState}
+
 import scala.util.{Failure, Success}
 import chess.Move
-import edu.brown.cs.engine.{AlphaBetaEngine}
+import edu.brown.cs.engine.{AlphaBetaEngine, ExternalEngine}
 import edu.brown.cs.io.{ChessLogger, ModelTranslations}
 
 /**
@@ -28,7 +31,7 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
   private var opponentColor = "white"
   private var gameState : GameState = null
   private var gameId : String = ""
-  private var engine : AlphaBetaEngine = null;
+  private var engine : ExternalEngine = null;
 
   implicit val ec = ExecutionContext.global
 
@@ -87,6 +90,7 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
   }
 
   //Processes an event string from the event stream, converting it to a json object to be further processed later.
+  //TODO fix starting as white engine
   private def processEvent(str: String): Unit ={
     if(!str.isBlank) {
       ChessLogger.debug(str)
@@ -158,7 +162,7 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
         val st: Either[GameFull, GameEventState] = try {
           Left(getGameFull(state))
         } catch {
-          case _ => Right(getGameEventState(state))
+          case _: Throwable => Right(getGameEventState(state))
         }
 
         st match {
@@ -166,23 +170,23 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
           case Right(ges) => println(ges); processGameEventState(ges)
         }
       } catch {
-        case _ => ChessLogger.debug("chat or unknown game state")
+        case _: Throwable => ChessLogger.debug("chat or unknown game state")
       }
     }
   }
 
   private def processFullGame(gf: GameFull): Unit ={
     if(!gameStateExists.get){
-      ChessLogger.debug(if(gf.white.nonEmpty) gf.white.get.id else "anon" + " opp")
+      ChessLogger.debug(if(gf.white.nonEmpty) gf.white.get.id.getOrElse("") else "anon" + " opp")
       opponentColor = if((if(gf.white.nonEmpty) gf.white.get.id else "anon").equals(botId)) "black" else "white"
       gf.initialFen match {
         case "startpos" =>
           gameState = GameCommands.startGame(Vector(opponentColor), Some(this)).get
-          engine = new AlphaBetaEngine(gameState, !opponentColor.equals("white"))
+          engine = new ExternalEngine(gameState, !opponentColor.equals("white"))
           gameStateExists.set(true)
         case s : String =>
           gameState = GameCommands.startGame(Vector(opponentColor, s), Some(this)).get
-          engine = new AlphaBetaEngine(gameState, !opponentColor.equals("white"))
+          engine = new ExternalEngine(gameState, !opponentColor.equals("white"))
           gameStateExists.set(true)
         case _ => ChessLogger.error("invalid fen received")
       }

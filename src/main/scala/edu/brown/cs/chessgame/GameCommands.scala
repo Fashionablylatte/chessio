@@ -1,13 +1,13 @@
 package edu.brown.cs.chessgame
 
-import edu.brown.cs.engine.{AlphaBetaEngine, Evaluation}
-import edu.brown.cs.engine.Evaluation
+import edu.brown.cs.engine.{AlphaBetaEngine, Evaluation, ExternalEngine}
 import edu.brown.cs.io.lichess.LichessEndpoint
+import edu.brown.cs.uci.EngineCommands
 
 object GameCommands {
   private var game : Option[GameState] = None
   private var side : Int = 0
-  private var eng : Option[AlphaBetaEngine] = None
+  private var eng : Option[ExternalEngine] = None
   private val ENG_AS_WHITE = true
   private val ENG_AS_BLACK = false
 
@@ -42,7 +42,7 @@ object GameCommands {
 
   private def gameInit(playerSide: Int, engSide: Boolean, fen: String, endpoint: Option[LichessEndpoint]): Option[GameState] ={
     game = Some(new GameState(fen, endpoint))
-    eng = Some(new AlphaBetaEngine(game.get, engSide))
+    eng = Some(new ExternalEngine(game.get, engSide))
     side = playerSide
     game
   }

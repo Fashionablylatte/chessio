@@ -13,12 +13,11 @@ class GameState(fen: String = "None", endpoint: Option[LichessEndpoint] = None) 
     val sit = Forsyth <<@(variant.Standard, fen)
     if(sit.nonEmpty) game = game.copy(situation = sit.get)
   }
-
   printBoard()
 
-  def printBoard(): Unit = println(game.board.toString)
+  def printBoard(): Unit = ChessLogger.pos("New game: ", game)
 
-  def makeMove(start: String, dest: String, promo: String): Option[Move] ={
+  def makeMove(start: String, dest: String, promo: String): Option[Move] ={ //TODO bind for external engine as well
     if(isEnd()){
       ChessLogger.info("'startgame' to start another game.")
       None

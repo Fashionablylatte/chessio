@@ -3,6 +3,7 @@ package edu.brown.cs.uci
 import java.io.{BufferedInputStream, BufferedReader, IOException, InputStreamReader, PipedInputStream, PipedOutputStream}
 import java.nio.charset.{Charset, StandardCharsets}
 
+import edu.brown.cs.chessgame.GameCommands
 import edu.brown.cs.io.ChessLogger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,22 +23,42 @@ object EngineCommands {
       currentProcess = None
     }
     try {
-      val runtime = Runtime.getRuntime()
-      val engine = "engines/stockfish_20011801_x64.exe"
+      val runtime = Runtime.getRuntime() //TODO still need this?
+      val configs = scala.xml.XML.loadFile("config/config.xml") //TODO make a separate config for the engine?
+      val engine = (configs \ "engine").map(token => token.text)(0)
 
       ChessLogger.info("Starting engine...")
 
-      val process = Process("./engines/stockfish_20011801_x64.exe").#<(uciStream).#>(pipe).run()
+      val process = Process(engine).#<(uciStream).#>(pipe).run()
       currentProcess = Some(process)
       Future{
-        val reader = new BufferedReader(new InputStreamReader(outStream))
+        val reader = new BufferedReader(new InputStreamReader(outStream)) //TODO debug this pipe
         while(currentProcess.nonEmpty){
-          ChessLogger.info(reader.readLine())
+          val result = reader.readLine()
+          ChessLogger.debug(result)
+          processResult(result)
         } //TODO close all pipes as necessary. TODO link output to Lc endpoint
       }
     } catch {
       case e: Exception => ChessLogger.error(s"Error starting engine: \n ${e.printStackTrace()}")
         currentProcess = None
+    }
+  }
+
+  private def processResult(str: String): Unit ={
+    if(str.nonEmpty) {
+      val arr = str.split(" ")
+      arr(0) match {
+        case "bestmove" =>
+          val move = arr(1)
+          val orig = arr.take(2).mkString("")
+          val dest = arr.drop(2).take(2).mkString("")
+          val prom = if (move.length == 5) move.drop(4).take(1).mkString("") else ""
+          GameCommands.makeMove(Vector[String](orig, dest, prom)) //TODO bind incoming moves as well
+        case "uciok" =>
+        case "readyok" =>
+        case "info" =>
+      }
     }
   }
 
