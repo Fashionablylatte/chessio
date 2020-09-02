@@ -2,8 +2,7 @@ package engine
 
 import chess.{Pos, Queen}
 import chess.format.Uci
-import edu.brown.cs.io.endgames.TablebaseEndpoint
-import edu.brown.cs.io.openings.OpeningEndpoint
+import edu.brown.cs.io.endpoints.{OpeningEndpoint, TablebaseEndpoint}
 import org.scalatest.Assertions._
 import org.junit.Test
 

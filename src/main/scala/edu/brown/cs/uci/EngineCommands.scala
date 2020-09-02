@@ -1,10 +1,9 @@
 package edu.brown.cs.uci
 
 import java.io.{BufferedInputStream, BufferedReader, IOException, InputStreamReader, PipedInputStream, PipedOutputStream}
-import java.nio.charset.{Charset, StandardCharsets}
 
-import edu.brown.cs.chessgame.GameCommands
 import edu.brown.cs.io.ChessLogger
+import edu.brown.cs.io.endpoints.LichessEndpoint
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.sys.process._
@@ -15,7 +14,11 @@ object EngineCommands {
   private val outStream = new PipedInputStream
   private val pipe = new PipedOutputStream(outStream)
   private var currentProcess: Option[Process] = None
-  implicit val ec = ExecutionContext.global
+//  implicit val ec = ExecutionContext.global
+  import scala.concurrent.ExecutionContext
+  import java.util.concurrent.Executors
+  implicit val ec = ExecutionContext.fromExecutorService(Executors.newWorkStealingPool(8))
+  private var endpoint: LichessEndpoint = null
 
   def startEngine(args: Vector[String]): Unit ={
     if(currentProcess.nonEmpty) {
@@ -32,12 +35,12 @@ object EngineCommands {
       val process = Process(engine).#<(uciStream).#>(pipe).run()
       currentProcess = Some(process)
       Future{
+        ChessLogger.debug("Future split off")
         val reader = new BufferedReader(new InputStreamReader(outStream)) //TODO debug this pipe
         while(currentProcess.nonEmpty){
-          val result = reader.readLine()
-          ChessLogger.debug(result)
-          processResult(result)
+          processResult(reader.readLine())
         } //TODO close all pipes as necessary. TODO link output to Lc endpoint
+        ChessLogger.info("Terminating engine.")
       }
     } catch {
       case e: Exception => ChessLogger.error(s"Error starting engine: \n ${e.printStackTrace()}")
@@ -46,18 +49,19 @@ object EngineCommands {
   }
 
   private def processResult(str: String): Unit ={
+    ChessLogger.debug(str)
     if(str.nonEmpty) {
       val arr = str.split(" ")
       arr(0) match {
         case "bestmove" =>
           val move = arr(1)
-          val orig = arr.take(2).mkString("")
-          val dest = arr.drop(2).take(2).mkString("")
-          val prom = if (move.length == 5) move.drop(4).take(1).mkString("") else ""
-          GameCommands.makeMove(Vector[String](orig, dest, prom)) //TODO bind incoming moves as well
-        case "uciok" =>
-        case "readyok" =>
-        case "info" =>
+          ChessLogger.debug(move)
+          endpoint.sendMove(move)
+        case _ =>
+//        case "uciok" => ChessLogger.debug("case 2")
+//        case "readyok" => ChessLogger.debug("case 3")
+//        case "info" => ChessLogger.debug("case 4")
+//        case _ => ChessLogger.debug("case 5") //TODO see if I want to handle this
       }
     }
   }
@@ -75,5 +79,23 @@ object EngineCommands {
   def updateUciStream(args: Vector[String]): Unit ={
     val str = if(args.length > 0) args(0) else ""
     uciStream.append(str)
+  }
+
+  def setEndpoint(ep: LichessEndpoint): Unit ={
+    this.endpoint = ep
+  }
+
+  def makeMove(fen: String, moves: String): Unit = { //TODO configure options for blocking table lookup
+    if(currentProcess.isEmpty){
+      startEngine(Vector[String]())
+      updateUciStream(Vector("uci"))
+    }
+    if(fen.equals("startpos")){
+      updateUciStream(Vector(s"position startpos moves $moves"))
+    } else {
+      updateUciStream(Vector(s"position fen $fen moves $moves"))
+    }
+    updateUciStream(Vector("go"))
+    ChessLogger.trace("Sent request to external engine.") //TODO reconfigure
   }
 }

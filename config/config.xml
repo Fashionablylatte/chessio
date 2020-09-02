@@ -5,9 +5,9 @@
 <config>
     <logging>trace</logging>
     <bot>
-        <id>fashionablybotehh</id>
-        <token>JxaRMFU8WWlIY98H</token>
+        <id>fltestaccountbot</id>
+        <token>s9i1CYgdaEtZKCus</token>
     </bot>
-    <environment>https://lichess.org</environment>
+    <environment>https://lichess.dev</environment>
     <engine>engines/stockfish_20011801_x64.exe</engine>
 </config>

@@ -15,13 +15,7 @@ class UciStream extends InputStream {
     while(contents.isEmpty) {
       Thread.sleep(1000)
     }
-    ChessLogger.trace("found contents")
-    val ret = contents.dequeue().toInt
-    if (ret != 0) {
-      ChessLogger.trace(ret.toChar.toString())
-      ChessLogger.trace(ret.toString)
-    }
-    ret
+    contents.dequeue().toInt
   }
 
   override def read(b: Array[Byte], off: Int, len: Int): Int = { //TODO worry about unexpected behavior here?

@@ -1,8 +1,8 @@
 package engine
 
-import chess.{Pos}
+import chess.Pos
 import chess.format.Uci
-import edu.brown.cs.io.openings.OpeningEndpoint
+import edu.brown.cs.io.endpoints.OpeningEndpoint
 import org.scalatest.Assertions._
 import org.junit.Test
 
