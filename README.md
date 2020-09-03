@@ -36,3 +36,7 @@ To run your bot, simply navigate to the root directory in your local repo and ru
 command line with `java -jar chessio-x.x.x.jar` (x.x.x being whatever version you have). The bot should
 now be challengeable from Lichess.org. 
 
+## Deployment
+IF you want to host your bot on the cloud for free, you can host it on a free Heroku dyno. A Procfile is
+already included in this repo, so you just need to deploy it. https://devcenter.heroku.com/articles/heroku-cli
+
