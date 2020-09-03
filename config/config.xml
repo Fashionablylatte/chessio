@@ -6,11 +6,24 @@
     <logging>trace</logging>
     <logfile>logs/log.txt</logfile>
     <bot>
-        <id>fltestaccountbot</id>
-        <token>s9i1CYgdaEtZKCus</token>
+        <id></id>
+        <token></token>
     </bot>
     <environment>https://lichess.dev</environment>
     <read-timeout>1800000</read-timeout>
     <conn-timeout>30000</conn-timeout>
     <engine>config/stockfish-config.xml</engine>
+    <variants>
+        <variant>Standard</variant>
+    </variants>
+    <time-control>
+        <untimed>true</untimed>
+        <timed>true</timed>
+        <min>15</min>
+        <max>30</max>
+        <inc-min>0</inc-min>
+        <inc-max>10</inc-max>
+    </time-control>
+    <rated>true</rated>
+    <casual>true</casual>
 </config>

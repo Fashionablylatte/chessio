@@ -7,7 +7,7 @@ import org.json4s.native.JsonMethods._
  * This class encapsulates the models for Lichess Event and Game stream objects and the methods for translating them
  * from strings to json objects.
  */
-class ModelTranslations { //TODO add validation to translations? //TODO add options to basically everything
+class ModelTranslations {
   implicit val formats = DefaultFormats
 
   //Event stream models
@@ -77,7 +77,7 @@ class ModelTranslations { //TODO add validation to translations? //TODO add opti
   def getEventTimeControl(json: String): EventTimeControl = {
     parse(json).extract[EventTimeControl]
   }
-  case class EventTimeControl(`type`: String, limit: Int, increment: Int, show: String)
+  case class EventTimeControl(`type`: String, limit: Option[Int], increment: Option[Int], show: Option[String])
 
   /**
    * Translates a Perf from Lichess.

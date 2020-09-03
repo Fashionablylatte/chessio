@@ -1,5 +1,5 @@
 <!-- This is a schema for the configurations file. -->
-<!ELEMENT config (logging, logfile, bot, environment, read-timeout?, conn-timeout?, engine)>
+<!ELEMENT config (logging, logfile, bot, environment, read-timeout?, conn-timeout?, engine, variants, timecontrol, rated, casual)>
 
         <!-- The level of logging to use -->
 <!ELEMENT logging (#PCDATA)>
@@ -9,8 +9,8 @@
 
         <!-- Identifying info about the Lichess bot account -->
 <!ELEMENT bot (id, token)>
-<!ELEMENT id (#PCDATA)>
-<!ELEMENT token (#PCDATA)>
+    <!ELEMENT id (#PCDATA)>
+    <!ELEMENT token (#PCDATA)>
 
         <!-- Lichess.org or Lichess.dev -->
 <!ELEMENT environment (#PCDATA)>
@@ -21,3 +21,20 @@
 
         <!-- The location of engine config file. -->
 <!ELEMENT engine (#PCDATA)>
+
+        <!-- Acceptable variants. -->
+<!ELEMENT variants (variant+)>
+    <!ELEMENT variant (#PCDATA)>
+
+        <!-- Time control or not (true/false), plus acceptable time controls. Time: Minutes + Increment: Seconds. -->
+<!ELEMENT timecontrol (untimed, timed, min, max, inc-min, inc-max)>
+    <!ELEMENT untimed (#PCDATA)>
+    <!ELEMENT timed (#PCDATA)>
+    <!ELEMENT min (#PCDATA)>
+    <!ELEMENT max (#PCDATA)>
+    <!ELEMENT inc-min (#PCDATA)>
+    <!ELEMENT inc-max (#PCDATA)>
+
+        <!-- Rated and unrated games allowed, true/false. -->
+<!ELEMENT rated (#PCDATA)>
+<!ELEMENT casual (#PCDATA)>

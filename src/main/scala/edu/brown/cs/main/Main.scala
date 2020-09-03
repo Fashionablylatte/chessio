@@ -13,15 +13,14 @@ import scala.collection.mutable
  */
 object Main {
   val configs = scala.xml.XML.loadFile("config/config.xml")
-  val botId = (configs \ "bot" \ "id").map(token => token.text)(0).toLowerCase()
   val server = (configs \ "environment").map(token => token.text)(0)
-  val token = try{ //TODO RESET ALL TOKENS BEFORE PUBLISHING
-    (configs \ "bot" \ "token").map(token => token.text)(0)
-  } catch {
-    case e: IndexOutOfBoundsException =>
-      Console.println("No token found in configs, attempting to retrieve from env")
-      System.getenv("TOKEN")
-  }
+
+  val botId =  (configs \ "bot" \ "id").map(token => token.text)(0).toLowerCase()
+  if(botId.isEmpty) throw new InstantiationException("Missing bot ID")
+
+  val token = (configs \ "bot" \ "token").map(token => token.text)(0)
+  if(botId.isEmpty) throw new InstantiationException("Missing bot token")
+
   val engine = (configs \ "engine").map(token => token.text)(0)
 
   def main(args: Array[String]): Unit = {
@@ -29,13 +28,13 @@ object Main {
     EngineCommands.setEndpoint(ep)
     EngineCommands.setEngineConf(engine)
     if(args.size == 0){ //default - run without REPL.
-      ChessLogger.info("Initializing in bot-only mode.")
+      ChessLogger.info("Initializing in dialogue-free mode.")
       ep.streamEvents(Vector[String]())
       while(ep.isConnectionOpen()){
 
       }
     } else { // run with a REPL in terminal
-      if(args(0).toLowerCase().equals("repl")){
+      if(args.contains("repl")){
         val commandMap: mutable.HashMap[String, Vector[String] => Any] = mutable.HashMap(
           "help" -> GeneralCommands.hello,
           "upgrade" -> ep.upgradeToBot,

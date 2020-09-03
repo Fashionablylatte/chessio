@@ -6,6 +6,7 @@ import edu.brown.cs.io.logging.ChessLogger
 import edu.brown.cs.io.uci.EngineCommands
 import scalaj.http._
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
@@ -39,6 +40,107 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
       30000
   }
 
+  private val variants: ArrayBuffer[String] = ArrayBuffer[String]()
+  try {
+    for{
+      variant <- (configs \\ "variant").map(v => v.text.toLowerCase)
+    } yield {
+      variants.append(variant)
+    }
+  } catch {
+    case _: Exception =>
+      ChessLogger.warn("Error getting permissible variants, defaulting to Standard.")
+      variants.append("standard")
+  }
+
+  private val untimed = try {
+    (configs \\ "untimed").map(ut => ut.text)(0).toBoolean
+  } catch {
+    case iobe: IndexOutOfBoundsException =>
+      ChessLogger.warn("No value found, defaulting to untimed games blocked.")
+      false
+    case nfe: IllegalArgumentException =>
+      ChessLogger.warn("Unparseable value, defaulting to untimed games blocked.")
+      false
+  }
+
+  private val timed = try {
+    (configs \\ "timed").map(ut => ut.text)(0).toBoolean
+  } catch {
+    case iobe: IndexOutOfBoundsException =>
+      ChessLogger.warn("No value found, defaulting to timed games allowed.")
+      true
+    case nfe: IllegalArgumentException =>
+      ChessLogger.warn("Unparseable value, defaulting to timed games allowed.")
+      true
+  }
+
+  private val timeMinimum = try {
+    (configs \\ "min").map(min => min.text)(0).toInt * 60
+  } catch {
+    case iobe: IndexOutOfBoundsException =>
+      ChessLogger.warn("No value found, defaulting to 30s minimum timecontrol.")
+      30
+    case nfe: NumberFormatException =>
+      ChessLogger.warn("Unparseable value, defaulting to 30s minimum timecontrol.")
+      30
+  }
+
+  private val timeMaximum = try {
+    (configs \\ "max").map(max => max.text)(0).toInt * 60
+  } catch {
+    case iobe: IndexOutOfBoundsException =>
+      ChessLogger.warn("No value found, defaulting to 18000mins maximum timecontrol.")
+      18000
+    case nfe: NumberFormatException =>
+      ChessLogger.warn("Unparseable value, defaulting to 18000mins maximum timecontrol.")
+      18000
+  }
+
+  private val incMinimum = try {
+    (configs \\ "inc-min").map(incMin => incMin.text)(0).toInt
+  } catch {
+    case iobe: IndexOutOfBoundsException =>
+      ChessLogger.warn("No value found, defaulting to 0s minimum increment.")
+      0
+    case nfe: NumberFormatException =>
+      ChessLogger.warn("Unparseable value, defaulting to 0s minimum increment.")
+      0
+  }
+
+  private val incMaximum = try {
+    (configs \\ "inc-max").map(incMax => incMax.text)(0).toInt
+  } catch {
+    case iobe: IndexOutOfBoundsException =>
+      ChessLogger.warn("No value found, defaulting to 120s minimum increment.")
+      120
+    case nfe: NumberFormatException =>
+      ChessLogger.warn("Unparseable value, defaulting to 120s minimum increment.")
+      120
+  }
+
+  private val rated = try {
+    (configs \ "rated").map(rt => rt.text)(0).toBoolean
+  } catch {
+    case iobe: IndexOutOfBoundsException =>
+      ChessLogger.warn("No value found, defaulting to rated games allowed.")
+      true
+    case nfe: IllegalArgumentException =>
+      ChessLogger.warn("Unparseable value, defaulting to rated games allowed.")
+      true
+  }
+
+  private val casual = try {
+    (configs \ "casual").map(rt => rt.text)(0).toBoolean
+  } catch {
+    case iobe: IndexOutOfBoundsException =>
+      ChessLogger.warn("No value found, defaulting to unrated games allowed.")
+      true
+    case nfe: IllegalArgumentException =>
+      ChessLogger.warn("Unparseable value, defaulting to unrated games allowed.")
+      true
+  }
+
   private val activeGame : AtomicBoolean = new AtomicBoolean(false)
   private val joinedGame : AtomicBoolean = new AtomicBoolean(false)
   private val connectionOpen : AtomicBoolean = new AtomicBoolean(true)
@@ -59,6 +161,7 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
     response.code match {
       case 200 => ChessLogger.info(s"Success: ${response.body}")
       case 429 => ChessLogger.warn("Rate limit"); Thread.sleep(60000)
+      case 401 => ChessLogger.fatal("unauthorized - check id and token!"); System.exit(1)
       case _ => ChessLogger.error(s"Error: ${response.body}")
     }
   }
@@ -78,7 +181,8 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
             }).code match {
             case 200 => ChessLogger.debug("event received OK")
             case 429 => ChessLogger.warn("rate limit req"); Thread.sleep(60000)
-            case _ => ChessLogger.error("error - other status code")
+            case 401 => ChessLogger.fatal("unauthorized - check id and token!"); System.exit(1)
+            case _ => ChessLogger.error("error - other status code"); Thread.sleep(60000)
           }
         } catch {
           case ex: Exception => ChessLogger.error("Event Processing Error: " + ex.getMessage); Thread.sleep(60000)
@@ -123,24 +227,36 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
     joinedGame.set(false)
   }
 
+  //checks if a challenge is acceptable. Accepting unlimited time games is not advisable, but hey it's your bot.
+  private def screenChallenge(chal: Challenge): Boolean ={
+    variants.contains(chal.variant.key.toLowerCase()) &&
+      (((chal.timeControl.`type`.equals("clock") && timed) &&
+      (chal.timeControl.limit.get <= timeMaximum && chal.timeControl.limit.get >= timeMinimum) &&
+      (chal.timeControl.increment.get <= incMaximum && chal.timeControl.increment.get >= incMinimum)) ||
+        (chal.timeControl.`type`.equals("unlimited") && untimed)) &&
+      ((chal.rated && rated) || ((!chal.rated) && casual))
+  }
+
   //process a challenge.
   private def processChallenge(chal: Challenge): Unit ={
     ChessLogger.trace("processing challenge")
     ChessLogger.trace(chal.challenger.toString())
-    if(chal.variant.key.equals("standard") && chal.timeControl.`type`.equals("clock") && chal.timeControl.limit >= 900){
+    if(screenChallenge(chal)){
       if(!activeGame.getAndSet(true)){
         Http(s"${server}/api/challenge/${chal.id}/accept").header("Authorization", s"Bearer $token").postForm.asString.code match {
           case 200 => ChessLogger.debug("accepted challenge")
           case 404 => ChessLogger.warn("challenge not found"); activeGame.set(false)
           case 429 => ChessLogger.warn("Rate limit"); Thread.sleep(60000)
+          case 401 => ChessLogger.fatal("unauthorized - check id and token!"); System.exit(1)
           case _ => ChessLogger.error("error accepting challenge"); activeGame.set(false)
         }
       }
-    } else { //TODO consider handling multiple games
+    } else {
       Http(s"${server}/api/challenge/${chal.id}/decline").header("Authorization", s"Bearer $token").postForm.asString.code match {
         case 200 => ChessLogger.debug("declined challenge")
         case 404 => ChessLogger.warn("no challenge to decline")
         case 429 => ChessLogger.warn("Rate limit"); Thread.sleep(60000)
+        case 401 => ChessLogger.fatal("unauthorized - check id and token!"); System.exit(1)
         case _ => ChessLogger.error("error declining challenge")
       }
     }
@@ -160,7 +276,8 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
           }).code match {
           case 200 => ChessLogger.debug("event received OK")
           case 429 => ChessLogger.warn("rate limit req"); Thread.sleep(60000)
-          case _ => ChessLogger.error("error - other status code")
+          case 401 => ChessLogger.fatal("unauthorized - check id and token!"); System.exit(1)
+          case _ => ChessLogger.error("error - other status code"); Thread.sleep(60000)
         }
       } catch {
         case ex: Exception => ChessLogger.error("Game Processing Error: " + ex.getMessage)
@@ -235,6 +352,7 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
     response.code match {
       case 200 => ChessLogger.debug(s"Move Success: ${response.body}")
       case 429 => ChessLogger.warn("Rate limit"); Thread.sleep(60000); sendMove(uci)
+      case 401 => ChessLogger.fatal("unauthorized - check id and token!"); System.exit(1)
       case _ => ChessLogger.error(s"Move Error: ${response.body}")
     }
   }

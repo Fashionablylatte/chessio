@@ -60,12 +60,4 @@ class UciStream extends InputStream {
       ChessLogger.trace(s"element '$str' appended to uci stream")
     }
   }
-
-  //TODO is this necessary?
-  /**
-   * Ends the stream.
-   */
-  def endStream(): Unit = {
-    terminate = true
-  }
 }
