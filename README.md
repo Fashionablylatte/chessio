@@ -28,7 +28,7 @@ creating an access token, see https://lichess.org/api#operation/botAccountUpgrad
 Now you must create another configuration file which will outline UCI options and the executable location
 for the specific engine you are using. It must be an XML file that follows the schema outlined in 
 engine-config.dtd. The name and value fields in each option will tell the program what UCI options to 
-send to the engine via setoption protocol. http://wbec-ridderkerk.nl/html/UCIProtocol.html
+send to the engine via setoption protocol (see http://wbec-ridderkerk.nl/html/UCIProtocol.html).
 Please see the example stockfish-config.xml if you are unsure what the file should look like. 
 
 # Running
