@@ -1,8 +1,9 @@
 package edu.brown.cs.io.endpoints
 
 import java.util.concurrent.atomic.AtomicBoolean
-import edu.brown.cs.io.{ChessLogger, ModelTranslations}
-import edu.brown.cs.uci.EngineCommands
+
+import edu.brown.cs.io.logging.ChessLogger
+import edu.brown.cs.io.uci.EngineCommands
 import scalaj.http._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -16,13 +17,30 @@ import scala.util.{Failure, Success}
  */
 class LichessEndpoint(token: String, botId: String, server: String) extends ModelTranslations {
 
-  //TODO might set these in config.xml instead?
-  val DEFAULT_READ_TIMEOUT = 1800000
-  val DEFAULT_CONNECT_TIMEOUT = 30000
+  private val configs = scala.xml.XML.loadFile("config/config.xml")
+  private val DEFAULT_READ_TIMEOUT = try {
+    (configs \ "read-timeout").map(ms => ms.text)(0).toInt
+  } catch {
+    case iobe: IndexOutOfBoundsException =>
+      ChessLogger.warn("No value found, defaulting to 1800000ms read timeout.")
+      1800000
+    case nfe: NumberFormatException =>
+      ChessLogger.warn("Unparseable value, defaulting to 1800000ms read timeout.")
+      1800000
+  }
+  private val DEFAULT_CONNECT_TIMEOUT = try {
+    (configs \ "conn-timeout").map(ms => ms.text)(0).toInt
+  } catch {
+    case iobe: IndexOutOfBoundsException =>
+      ChessLogger.warn("No value found, defaulting to 30000ms connect timeout.")
+      30000
+    case nfe: NumberFormatException =>
+      ChessLogger.warn("Unparseable value, defaulting to 30000ms connect timeout.")
+      30000
+  }
 
   private val activeGame : AtomicBoolean = new AtomicBoolean(false)
   private val joinedGame : AtomicBoolean = new AtomicBoolean(false)
-  private val gameStateExists : AtomicBoolean = new AtomicBoolean(false) //TODO refactor to be stateless and UCI compliant
   private val connectionOpen : AtomicBoolean = new AtomicBoolean(true)
   private var opponentColor = "white"
   private var initialFen = "startpos"
@@ -85,28 +103,28 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
   }
 
   //Processes an event string from the event stream, converting it to a json object to be further processed later.
-  //TODO fix starting as white engine
   private def processEvent(str: String): Unit ={
     if(!str.isBlank) {
       ChessLogger.debug(str)
       val event = getInboundEvent(str)
-      event.`type` match { //TODO catch exceptions - mobile breaks this for some reason
+      event.`type` match {
         case Some("challenge") => ChessLogger.debug(s"received challenge ${event.challenge.getOrElse("ex get chal")}"); processChallenge(event.challenge.get)
         case Some("gameStart") => ChessLogger.debug("game started"); processGame(event.game.get.id)
         case Some("gameFinish") => ChessLogger.debug("game finished"); resetEndpoint();
-        case Some("gameAborted") => ChessLogger.debug("game aborted"); resetEndpoint(); //TODO
+        case Some("gameAborted") => ChessLogger.debug("game aborted"); resetEndpoint();
         case _ => ChessLogger.warn("event not recognized")
       }
     }
   }
 
+  //resets the game status. Used after a game ends.
   private def resetEndpoint(): Unit ={
     activeGame.set(false)
     joinedGame.set(false)
-    gameStateExists.set(false)
   }
 
-  private def processChallenge(chal: Challenge): Unit ={ //TODO handle multiple challenges
+  //process a challenge.
+  private def processChallenge(chal: Challenge): Unit ={
     ChessLogger.trace("processing challenge")
     ChessLogger.trace(chal.challenger.toString())
     if(chal.variant.key.equals("standard") && chal.timeControl.`type`.equals("clock") && chal.timeControl.limit >= 900){
@@ -118,7 +136,7 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
           case _ => ChessLogger.error("error accepting challenge"); activeGame.set(false)
         }
       }
-    } else {
+    } else { //TODO consider handling multiple games
       Http(s"${server}/api/challenge/${chal.id}/decline").header("Authorization", s"Bearer $token").postForm.asString.code match {
         case 200 => ChessLogger.debug("declined challenge")
         case 404 => ChessLogger.warn("no challenge to decline")
@@ -128,6 +146,7 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
     }
   }
 
+  //processes a game.
   private def processGame(gameId: String): Unit ={
     ChessLogger.info(s"joining game $gameId")
     activeGame.set(true)
@@ -150,9 +169,10 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
     ChessLogger.debug("Game stream closed normally")
   }
 
+  //processes
   private def processGameState(state: String): Unit ={
     if(!state.isBlank) {
-      println(state)
+      ChessLogger.debug(state)
       try {
         val st: Either[GameFull, GameEventState] = try {
           Left(getGameFull(state))
@@ -161,8 +181,8 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
         }
 
         st match {
-          case Left(gf) => println(gf); processFullGame(gf)
-          case Right(ges) => println(ges); processGameEventState(ges)
+          case Left(gf) => ChessLogger.debug(gf.toString); processFullGame(gf)
+          case Right(ges) => ChessLogger.debug(ges.toString); processGameEventState(ges)
         }
       } catch {
         case _: Throwable => ChessLogger.debug("chat or unknown game state")
@@ -170,18 +190,19 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
     }
   }
 
+  //processes a full game, setting the sides as appropriate.
   private def processFullGame(gf: GameFull): Unit ={
     ChessLogger.debug(if(gf.white.nonEmpty) gf.white.get.id.getOrElse("") else "anon" + " opp")
     opponentColor = if((if(gf.white.nonEmpty) gf.white.get.id.getOrElse("") else "anon").equals(botId)) "black" else "white"
     gf.initialFen match {
       case s : String =>
         initialFen = s
-        gameStateExists.set(true)
         processGameEventState(gf.state)
       case _ => ChessLogger.error("invalid fen received")
     }
   }
 
+  //processes a game state.
   private def processGameEventState(ges: GameEventState): Unit ={
     if(ges.status.equals("started")) {
       val moveCount = if(ges.moves.isEmpty) 0 else ges.moves.count(p => p == 32) + 1
@@ -205,6 +226,10 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
     }
   }
 
+  /**
+   * Sends a move in UCI format to the Lichess server.
+   * @param uci - a chess move in UCI format.
+   */
   def sendMove(uci: String){
     val response: HttpResponse[String] = Http(s"${server}/api/bot/game/${gameId}/move/${uci}").header("Authorization", s"Bearer $token").postForm.asString
     response.code match {

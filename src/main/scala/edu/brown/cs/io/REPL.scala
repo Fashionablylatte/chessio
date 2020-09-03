@@ -6,18 +6,31 @@ import scala.Console.RED
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
+/**
+ * A basic REPL for Scala programs.
+ * @param functionMap - A mapping of String command names to functions of the signature Vector[String] => Any.
+ */
 class REPL(functionMap: mutable.HashMap[String, Vector[String] => Any]) {
+  addCommand("help", helpCommand)
 
+  /**
+   * Adds a supported command to the REPL.
+   * @param commandName - the String name of the command.
+   * @param commandFunction
+   */
   def addCommand(commandName: String, commandFunction: Vector[String] => Any): Unit ={
     functionMap += (commandName -> commandFunction)
   }
 
-  addCommand("help", helpCommand)
-
-  private def helpCommand(args: Vector[String]): Unit ={
-    Console.println(functionMap.keySet.mkString("These commands are available: ", ", ", ""))
+  /**
+   * Retrieves a list of all available commands.
+   * @param args - a Vector of String arguments to provide to this command.
+   */
+  def helpCommand(args: Vector[String]): Unit ={
+    Console.println("[REPL]: " + functionMap.keySet.mkString("These commands are available: ", ", ", ""))
   }
 
+  // runs a command.
   private def processCommand(commandName: String, args: Vector[String]): Unit ={
     functionMap.get(commandName) match {
       case Some(func) => func(args)
@@ -25,6 +38,9 @@ class REPL(functionMap: mutable.HashMap[String, Vector[String] => Any]) {
     }
   }
 
+  /**
+   * Runs the REPL. This REPL uses io.StdIn, so make sure no other processes also occupy System.in.
+   */
   def run(): Unit ={
     var input = io.StdIn.readLine()
     while(input != null){
@@ -41,7 +57,7 @@ class REPL(functionMap: mutable.HashMap[String, Vector[String] => Any]) {
       }
       input = io.StdIn.readLine()
     }
-    Console.println("User input Ctrl-D exit")
+    Console.println("[REPL]: User input Ctrl-D exit")
   }
 }
 

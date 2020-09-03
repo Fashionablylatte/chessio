@@ -4,10 +4,13 @@
 <!DOCTYPE config SYSTEM "config/config.dtd">
 <config>
     <logging>trace</logging>
+    <logfile>logs/log.txt</logfile>
     <bot>
         <id>fltestaccountbot</id>
         <token>s9i1CYgdaEtZKCus</token>
     </bot>
     <environment>https://lichess.dev</environment>
-    <engine>engines/stockfish_20011801_x64.exe</engine>
+    <read-timeout>1800000</read-timeout>
+    <conn-timeout>30000</conn-timeout>
+    <engine>config/stockfish-config.xml</engine>
 </config>

@@ -1,8 +1,23 @@
 <!-- This is a schema for the configurations file. -->
-<!ELEMENT config (logging, bot, environment, engine)>
+<!ELEMENT config (logging, logfile, bot, environment, read-timeout?, conn-timeout?, engine)>
+
+        <!-- The level of logging to use -->
 <!ELEMENT logging (#PCDATA)>
+
+        <!-- The log file to use -->
+<!ELEMENT logfile (#PCDATA)>
+
+        <!-- Identifying info about the Lichess bot account -->
 <!ELEMENT bot (id, token)>
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT token (#PCDATA)>
+
+        <!-- Lichess.org or Lichess.dev -->
 <!ELEMENT environment (#PCDATA)>
+
+        <!-- Optional connection settings -->
+<!ELEMENT read-timeout (#PCDATA)>
+<!ELEMENT conn-timeout (#PCDATA)>
+
+        <!-- The location of engine config file. -->
 <!ELEMENT engine (#PCDATA)>
