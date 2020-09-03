@@ -31,7 +31,7 @@ engine-config.dtd. The name and value fields in each option will tell the progra
 send to the engine via setoption protocol (see http://wbec-ridderkerk.nl/html/UCIProtocol.html).
 Please see the example stockfish-config.xml if you are unsure what the file should look like. 
 
-# Running
+## Running
 To run your bot, simply navigate to the root directory in your local repo and run the jar file from the 
 command line with `java -jar chessio-x.x.x.jar` (x.x.x being whatever version you have). The bot should
 now be challengeable from Lichess.org. 
