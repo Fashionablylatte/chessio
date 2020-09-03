@@ -1,12 +1,29 @@
-<!--Config file for this application. Layout specified by config.dtd-->
 <?xml version="1.0" encoding="UTF-8"?>
+<!--Config file for this application. Layout specified by config.dtd-->
+<!-- Note that IntelliJ may incorrectly flag this, so try compiling anyway-->
 <!DOCTYPE config SYSTEM "config/config.dtd">
 <config>
-    <logging>debug</logging>
+    <logging>trace</logging>
+    <logfile>logs/log.txt</logfile>
     <bot>
         <id></id>
         <token></token>
     </bot>
-    <environment>https://lichess.org</environment>
-    <engine>engines/stockfish_20011801_x64.exe</engine>
+    <environment>https://lichess.dev</environment>
+    <read-timeout>1800000</read-timeout>
+    <conn-timeout>30000</conn-timeout>
+    <engine>config/stockfish-config.xml</engine>
+    <variants>
+        <variant>Standard</variant>
+    </variants>
+    <time-control>
+        <untimed>true</untimed>
+        <timed>true</timed>
+        <min>15</min>
+        <max>30</max>
+        <inc-min>0</inc-min>
+        <inc-max>10</inc-max>
+    </time-control>
+    <rated>true</rated>
+    <casual>true</casual>
 </config>

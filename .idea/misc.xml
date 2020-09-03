@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="ExcludeFromValidation">
+    <file url="file://$PROJECT_DIR$/src/main/scala/edu/brown/cs/io/uci/EngineCommands.scala" />
+  </component>
   <component name="MavenProjectsManager">
     <option name="originalFiles">
       <list>

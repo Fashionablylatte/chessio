@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Config file for the engine in use. -->
+<!DOCTYPE engine-config SYSTEM "config/engine-config.dtd">
+<engine>
+    <location>engines/stockfish_20011801_x64.exe</location>
+    <options>
+        <option>
+            <name>Threads</name>
+            <value>2</value>
+        </option>
+        <option>
+            <name>Slow Mover</name>
+            <value>20</value>
+        </option>
+    </options>
+</engine>

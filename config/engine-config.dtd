@@ -1,0 +1,13 @@
+<!-- This is a schema for an engine configuration file. -->
+<!ELEMENT engine (location, options)>
+
+<!-- This is the location of the exe file -->
+<!ELEMENT location (#PCDATA)>
+
+<!-- This is the set of options for the engine. -->
+<!ELEMENT options (options?)>
+
+<!-- This is an individual option for the engine. -->
+<!ELEMENT option (name, value)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT value (#PCDATA)>
