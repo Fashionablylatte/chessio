@@ -76,7 +76,9 @@ object EngineCommands {
         case "bestmove" =>
           val move = arr(1)
           ChessLogger.info(str)
-          endpoint.sendMove(move)
+          if(endpoint != null && endpoint.isConnectionOpen()){
+            endpoint.sendMove(move)
+          }
         case _ =>
           ChessLogger.info(str)
       }

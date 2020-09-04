@@ -143,7 +143,7 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
 
   private val activeGame : AtomicBoolean = new AtomicBoolean(false)
   private val joinedGame : AtomicBoolean = new AtomicBoolean(false)
-  private val connectionOpen : AtomicBoolean = new AtomicBoolean(true)
+  private val connectionOpen : AtomicBoolean = new AtomicBoolean(false)
   private var opponentColor = "white"
   private var initialFen = "startpos"
   private var gameId : String = ""
@@ -173,6 +173,7 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
    */
   def streamEvents(args: Vector[String]): Unit ={
     Future {
+      connectionOpen.set(true)
       while(!joinedGame.get){
         try{
           Http(s"${server}/api/stream/event").timeout(DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT).header("Authorization", s"Bearer $token").execute(
