@@ -34,9 +34,13 @@ Please see the example stockfish-config.xml if you are unsure what the file shou
 ## Running
 To run your bot, simply navigate to the root directory in your local repo and run the jar file from the 
 command line with `java -jar chessio-x.x.x.jar` (x.x.x being whatever version you have). The bot should
-now be challengeable from Lichess.org. 
+now be challengeable from Lichess.org. Optionally, you can run it with a REPL option to have more control
+over the operation of the bot - use `java -jar chessio-x.x.x.jar repl`. The available options include
+'help' (see available commands), 'upgrade' (upgrade the current account to Bot), 'connect' (open a bot 
+connection to Lichess), 'startengine' (runs the specified engine exe locally without a Lichess connection),
+and 'conf', which allows you to send a UCI argument to the engine (e.g. 'conf uci' sends 'uci' to the engine).
 
 ## Deployment
-IF you want to host your bot on the cloud for free, you can host it on a free Heroku dyno. A Procfile is
+If you want to host your bot on the cloud for free, you can host it on a free Heroku dyno. A Procfile is
 already included in this repo, so you just need to deploy it. https://devcenter.heroku.com/articles/heroku-cli
 
