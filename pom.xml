@@ -4,14 +4,13 @@
   <artifactId>chessio</artifactId>
   <version>0.0.2</version>
   <name>${project.artifactId}</name>
-  <description>A chess engine written in Scala</description>
+  <description>A Lichess engine bridge written in Scala</description>
   <inceptionYear>2020</inceptionYear>
 
-  <!-- Will eventually use some open source license -->
   <licenses>
     <license>
-      <name>My License</name>
-      <url>http://....</url>
+      <name>MIT License</name>
+      <url>https://qiyu-joe-han.mit-license.org/</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
