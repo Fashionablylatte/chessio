@@ -9,6 +9,7 @@ import scalaj.http._
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import edu.brown.cs.config.LichessBotConfig
 
 /**
  * An endpoint with methods for accessing Lichess.
@@ -19,127 +20,8 @@ import scala.util.{Failure, Success}
 class LichessEndpoint(token: String, botId: String, server: String) extends ModelTranslations {
 
   private val configs = scala.xml.XML.loadFile("config/config.xml")
-  private val DEFAULT_READ_TIMEOUT = try {
-    (configs \ "read-timeout").map(ms => ms.text)(0).toInt
-  } catch {
-    case iobe: IndexOutOfBoundsException =>
-      ChessLogger.warn("No value found, defaulting to 1800000ms read timeout.")
-      1800000
-    case nfe: NumberFormatException =>
-      ChessLogger.warn("Unparseable value, defaulting to 1800000ms read timeout.")
-      1800000
-  }
-  private val DEFAULT_CONNECT_TIMEOUT = try {
-    (configs \ "conn-timeout").map(ms => ms.text)(0).toInt
-  } catch {
-    case iobe: IndexOutOfBoundsException =>
-      ChessLogger.warn("No value found, defaulting to 30000ms connect timeout.")
-      30000
-    case nfe: NumberFormatException =>
-      ChessLogger.warn("Unparseable value, defaulting to 30000ms connect timeout.")
-      30000
-  }
-
-  private val variants: ArrayBuffer[String] = ArrayBuffer[String]()
-  try {
-    for{
-      variant <- (configs \\ "variant").map(v => v.text.toLowerCase)
-    } yield {
-      variants.append(variant)
-    }
-  } catch {
-    case _: Exception =>
-      ChessLogger.warn("Error getting permissible variants, defaulting to Standard.")
-      variants.append("standard")
-  }
-
-  private val untimed = try {
-    (configs \\ "untimed").map(ut => ut.text)(0).toBoolean
-  } catch {
-    case iobe: IndexOutOfBoundsException =>
-      ChessLogger.warn("No value found, defaulting to untimed games blocked.")
-      false
-    case nfe: IllegalArgumentException =>
-      ChessLogger.warn("Unparseable value, defaulting to untimed games blocked.")
-      false
-  }
-
-  private val timed = try {
-    (configs \\ "timed").map(ut => ut.text)(0).toBoolean
-  } catch {
-    case iobe: IndexOutOfBoundsException =>
-      ChessLogger.warn("No value found, defaulting to timed games allowed.")
-      true
-    case nfe: IllegalArgumentException =>
-      ChessLogger.warn("Unparseable value, defaulting to timed games allowed.")
-      true
-  }
-
-  private val timeMinimum = try {
-    (configs \\ "min").map(min => min.text)(0).toInt * 60
-  } catch {
-    case iobe: IndexOutOfBoundsException =>
-      ChessLogger.warn("No value found, defaulting to 30s minimum timecontrol.")
-      30
-    case nfe: NumberFormatException =>
-      ChessLogger.warn("Unparseable value, defaulting to 30s minimum timecontrol.")
-      30
-  }
-
-  private val timeMaximum = try {
-    (configs \\ "max").map(max => max.text)(0).toInt * 60
-  } catch {
-    case iobe: IndexOutOfBoundsException =>
-      ChessLogger.warn("No value found, defaulting to 18000mins maximum timecontrol.")
-      18000
-    case nfe: NumberFormatException =>
-      ChessLogger.warn("Unparseable value, defaulting to 18000mins maximum timecontrol.")
-      18000
-  }
-
-  private val incMinimum = try {
-    (configs \\ "inc-min").map(incMin => incMin.text)(0).toInt
-  } catch {
-    case iobe: IndexOutOfBoundsException =>
-      ChessLogger.warn("No value found, defaulting to 0s minimum increment.")
-      0
-    case nfe: NumberFormatException =>
-      ChessLogger.warn("Unparseable value, defaulting to 0s minimum increment.")
-      0
-  }
-
-  private val incMaximum = try {
-    (configs \\ "inc-max").map(incMax => incMax.text)(0).toInt
-  } catch {
-    case iobe: IndexOutOfBoundsException =>
-      ChessLogger.warn("No value found, defaulting to 120s minimum increment.")
-      120
-    case nfe: NumberFormatException =>
-      ChessLogger.warn("Unparseable value, defaulting to 120s minimum increment.")
-      120
-  }
-
-  private val rated = try {
-    (configs \ "rated").map(rt => rt.text)(0).toBoolean
-  } catch {
-    case iobe: IndexOutOfBoundsException =>
-      ChessLogger.warn("No value found, defaulting to rated games allowed.")
-      true
-    case nfe: IllegalArgumentException =>
-      ChessLogger.warn("Unparseable value, defaulting to rated games allowed.")
-      true
-  }
-
-  private val casual = try {
-    (configs \ "casual").map(rt => rt.text)(0).toBoolean
-  } catch {
-    case iobe: IndexOutOfBoundsException =>
-      ChessLogger.warn("No value found, defaulting to unrated games allowed.")
-      true
-    case nfe: IllegalArgumentException =>
-      ChessLogger.warn("Unparseable value, defaulting to unrated games allowed.")
-      true
-  }
+  private val (defaultReadTimeout, defaultConnectTimeout, variants, untimed, timed, timeMinimum,
+  timeMaximum, incMinimum, incMaximum, rated, casual) = LichessBotConfig.loadEndpointConfig("config/config.xml")
 
   private val activeGame : AtomicBoolean = new AtomicBoolean(false)
   private val joinedGame : AtomicBoolean = new AtomicBoolean(false)
@@ -176,7 +58,7 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
       connectionOpen.set(true)
       while(!joinedGame.get){
         try{
-          Http(s"${server}/api/stream/event").timeout(DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT).header("Authorization", s"Bearer $token").execute(
+          Http(s"${server}/api/stream/event").timeout(defaultConnectTimeout, defaultReadTimeout).header("Authorization", s"Bearer $token").execute(
             strm => {
               scala.io.Source.fromInputStream(strm).getLines().foreach(processEvent)
             }).code match {
@@ -271,7 +153,7 @@ class LichessEndpoint(token: String, botId: String, server: String) extends Mode
     this.gameId = gameId
     while(activeGame.get()){
       try{
-        Http(s"${server}/api/bot/game/stream/${gameId}").timeout(DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT).header("Authorization", s"Bearer $token").execute(
+        Http(s"${server}/api/bot/game/stream/${gameId}").timeout(defaultConnectTimeout, defaultReadTimeout).header("Authorization", s"Bearer $token").execute(
           strm => {
             scala.io.Source.fromInputStream(strm).getLines().foreach(processGameState)
           }).code match {

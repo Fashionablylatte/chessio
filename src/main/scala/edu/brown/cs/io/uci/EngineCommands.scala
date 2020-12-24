@@ -9,6 +9,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.sys.process._
 import java.util.concurrent.Executors
 
+import edu.brown.cs.config.UCIEngineConfig
+
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -35,16 +37,8 @@ object EngineCommands {
       currentProcess = None
     }
     try {
-      val configs = scala.xml.XML.loadFile(engineConf)
-      val engine = (configs \ "location").map(token => token.text)(0)
-      val options: ArrayBuffer[(String, String)] = ArrayBuffer[(String, String)]()
-      for {
-        option <- configs \\ "option"
-        name <- (option \ "name").map(token => token.text)
-        value <- (option \ "value").map(token => token.text)
-      } yield {
-        options.append((name, value))
-      }
+      val (engine, options) = UCIEngineConfig.getEngineSettings(engineConf)
+
       options.foreach(p =>
         updateUciStream(Vector(s"setoption name ${p._1} value ${p._2}"))
       )

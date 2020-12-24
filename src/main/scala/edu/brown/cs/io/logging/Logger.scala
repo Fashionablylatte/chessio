@@ -1,10 +1,12 @@
 package edu.brown.cs.io.logging
 
+import edu.brown.cs.config.LoggerConfig
+
 /**
  * Logging utility with 7 possible levels of information. 0 (None) for no information printouts, and 6 (trace) for
  * extremely verbose printouts.
  */
-abstract class Logger {
+abstract class Logger { // TODO maybe replace with actual enumerations? would need to create custom implicit ordering
   val NONE = 0
   val FATAL = 1
   val ERROR = 2
@@ -14,23 +16,7 @@ abstract class Logger {
   val TRACE = 6
   val name = "LOGGER"
 
-  val conf = scala.xml.XML.loadFile("config/config.xml")
-  val levelName = try {
-    (conf \ "logging").map(ln => ln.text)(0)
-  } catch {
-    case e: IndexOutOfBoundsException =>
-      Console.err.println("No logger setting found! Defaulting to 'info' (moderately verbose).")
-      "info"
-  }
-  val level = levelName.toUpperCase() match {
-    case "NONE" => 0
-    case "FATAL" => 1
-    case "ERROR" => 2
-    case "WARN" => 3
-    case "INFO" => 4
-    case "DEBUG" => 5
-    case "TRACE" => 6
-  }
+  val level = LoggerConfig.getLoggingLevel("config/config.xml")
 
   /**
    * Logs a message for a fatal event. Intended only for errors that should cause the program to exit.
