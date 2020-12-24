@@ -41,6 +41,7 @@ connection to Lichess), 'startengine' (runs the specified engine exe locally wit
 and 'conf', which allows you to send a UCI argument to the engine (e.g. 'conf uci' sends 'uci' to the engine).
 
 ## Deployment
-If you want to host your bot on the cloud for free, you can host it on a free Heroku dyno. A Procfile is
-already included in this repo, so you just need to deploy it. https://devcenter.heroku.com/articles/heroku-cli
+If you want to host your bot on the cloud for free, you can host it on a free Heroku dyno. A Procfile and
+the Heroku sdk dependency are already included in this repo, so you just need to deploy it.
+https://devcenter.heroku.com/articles/heroku-cli
 
